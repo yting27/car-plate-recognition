@@ -1,0 +1,24 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Datasets, model weights, and generated results
+/dataset/
+/models/
+/runs/
+/output/
+*.pt
+*.pth
+
+# macOS metadata
+.DS_Store
