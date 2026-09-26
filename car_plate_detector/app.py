@@ -3,6 +3,7 @@
 import argparse
 
 from .config import (
+    DETECTION_CONFIDENCE,
     MODEL_PATH,
     OCR_MODEL_DIR,
     OCR_MODEL_NAME,
@@ -52,7 +53,7 @@ def main() -> None:
             if media_path.suffix.lower() in VIDEO_EXTENSIONS:
                 print(
                     f"  Video processes at up to {VIDEO_MAX_FPS} FPS; "
-                    "any key = next file, 'q'/ESC = quit"
+                    "Space = pause/resume; Enter = next file; close window = quit"
                 )
                 if (
                     process_video(
@@ -64,11 +65,13 @@ def main() -> None:
                 continue
 
             # Image data
-            result = detector.predict(source=str(media_path), verbose=False)[0]
+            result = detector.predict(
+                source=str(media_path), conf=DETECTION_CONFIDENCE, verbose=False
+            )[0]
             annotated, _ = annotate_result(result, recognizer, verbose=args.verbose)
             viewer.show(annotated)
 
-            print("  Any key = next image, 'q'/ESC = quit")
+            print("  Enter = next image; close window = quit")
             if viewer.wait_for_action() == "quit":
                 break
     finally:

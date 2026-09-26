@@ -13,6 +13,7 @@ class DetectorViewer:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.action = tk.StringVar(root)
+        self.allow_pause = False
         self.photo: ImageTk.PhotoImage | None = None
         self.frame_image: Image.Image | None = None
 
@@ -59,9 +60,12 @@ class DetectorViewer:
         self.canvas.coords(self.image_item, width / 2, height / 2)
         self.canvas.itemconfigure(self.image_item, image=self.photo)
 
-    def wait_for_action(self, timeout_ms: int | None = None) -> str:
+    def wait_for_action(
+        self, timeout_ms: int | None = None, *, allow_pause: bool = False
+    ) -> str:
         """Handle UI events until a key is pressed or the next frame is due."""
         self.action.set("")
+        self.allow_pause = allow_pause
         timer = None
         if timeout_ms is not None:
             timer = self.root.after(timeout_ms, lambda: self.action.set("tick"))
@@ -69,6 +73,7 @@ class DetectorViewer:
             self.root.wait_variable(self.action)
             return self.action.get()
         finally:
+            self.allow_pause = False
             if timer is not None:
                 self.root.after_cancel(timer)
 
@@ -79,10 +84,10 @@ class DetectorViewer:
         self.root.destroy()
 
     def _on_key(self, event: tk.Event) -> None:
-        if event.keysym == "Escape":
-            self.quit()
-            return
-        self.action.set("quit" if event.keysym in {"q", "Escape"} else "advance")
+        if event.keysym in {"Return", "KP_Enter"}:
+            self.action.set("advance")
+        elif event.keysym == "space" and self.allow_pause:
+            self.action.set("pause")
 
     def _focus_canvas(self, event: tk.Event) -> None:
         del event

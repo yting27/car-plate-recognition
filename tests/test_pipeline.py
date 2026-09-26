@@ -153,7 +153,7 @@ class PipelineTests(unittest.TestCase):
     def test_threshold_on_every_display_path(self):
         for video in (False, True):
             for associated in (False, True):
-                for score in (0.899, 0.9, float("nan"), float("inf"), 1.1):
+                for score in (0.799, 0.8, float("nan"), float("inf"), 1.1):
                     with self.subTest(video=video, associated=associated, score=score):
                         detected = result()
                         if not associated:
@@ -169,7 +169,7 @@ class PipelineTests(unittest.TestCase):
                                 _, labels = annotate_result(
                                     detected, self.ocr, tracking=tracker
                                 )
-                        should_show = score == 0.9 and (not video or associated)
+                        should_show = score == 0.8 and (not video or associated)
                         self.assertEqual(bool(labels), should_show)
                         if not should_show:
                             self.assertFalse(
@@ -178,8 +178,36 @@ class PipelineTests(unittest.TestCase):
                                     for call in draw_label.call_args_list
                                 )
                             )
-                        if tracker and score != 0.9:
+                        if tracker and score != 0.8:
                             self.assertFalse(tracker.histories)
+
+    def test_class_thresholds_before_tracking_drawing_and_ocr(self):
+        rows = np.array(
+            [
+                [0, 0, 310, 230, 0.399, 0],
+                [10, 10, 300, 220, 0.4, 0],
+                [30, 100, 90, 130, 0.499, 1],
+                [100, 150, 180, 180, 0.5, 1],
+            ],
+            dtype=np.float32,
+        )
+        for video in (False, True):
+            with self.subTest(video=video):
+                detected = result()
+                detected.update(boxes=rows)
+                tracker = VideoPlateTracker() if video else None
+                self.ocr.reset_mock()
+                with patch("car_plate_detector.pipeline.draw_box") as draw_box:
+                    annotate_result(detected, self.ocr, tracking=tracker)
+                self.assertEqual(
+                    [call.args[1] for call in draw_box.call_args_list],
+                    [rows[1, :4].tolist(), rows[3, :4].tolist()],
+                )
+                self.ocr.predict.assert_called_once()
+                if tracker:
+                    self.assertEqual(
+                        list(tracker.cars.values()), [rows[1, :4].tolist()]
+                    )
 
     def test_video_confirmation_and_retained_reading(self):
         tracker = VideoPlateTracker()

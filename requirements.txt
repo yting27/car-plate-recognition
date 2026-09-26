@@ -1,0 +1,9 @@
+# Direct runtime dependencies; validated with Python 3.12 on macOS arm64.
+# Tkinter must be provided by the Python/system installation.
+ultralytics==8.4.163
+paddleocr==3.7.0
+paddlepaddle==3.2.0
+opencv-python==5.0.0.93
+numpy==2.3.5
+Pillow==12.3.0
+lap==0.5.13

@@ -13,7 +13,10 @@ __pycache__/
 !.env.example
 
 # Datasets, model weights, and generated results
-/dataset/
+/dataset/*
+!/dataset/test/
+/dataset/test/*
+!/dataset/test/test*
 /runs/
 /output/
 *.pt

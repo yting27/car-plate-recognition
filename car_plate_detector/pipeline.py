@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from .config import CAR_DETECTION_CONFIDENCE, PLATE_DETECTION_CONFIDENCE
 from .drawing import car_label, draw_box, draw_label
 from .ocr import crop_plate, recognize_plate, usable_reading
 from .tracking import containing_cars, plate_owner
@@ -15,6 +16,21 @@ if TYPE_CHECKING:
     from ultralytics.engine.results import Boxes, Results
 
     from .tracking import VideoPlateTracker
+
+
+def filter_detections(result: Results) -> Results:
+    """Apply class thresholds before association, tracking, drawing, and OCR."""
+    if result.boxes is None:
+        return result
+    selected = []
+    for index, box in enumerate(result.boxes):
+        name = result.names[int(box.cls.item())].lower()
+        threshold = (
+            PLATE_DETECTION_CONFIDENCE if "plate" in name else CAR_DETECTION_CONFIDENCE
+        )
+        if float(box.conf.item()) >= threshold:
+            selected.append(index)
+    return result[selected]
 
 
 def select_car_detections(result: Results) -> Results:
@@ -76,7 +92,7 @@ def annotate_result(
     """Use the same box styles and car-label placement for images and videos."""
     annotated = result.orig_img.copy()
     plate_texts: list[str] = []
-    result = select_car_detections(result)
+    result = select_car_detections(filter_detections(result))
     boxes = result.boxes
     readings = []
     if tracking is not None:

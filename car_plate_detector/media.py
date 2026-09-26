@@ -10,8 +10,8 @@ import cv2
 import numpy as np
 
 from .config import (
+    DETECTION_CONFIDENCE,
     IMAGE_EXTENSIONS,
-    VIDEO_DETECTION_CONFIDENCE,
     VIDEO_EXTENSIONS,
     VIDEO_MAX_FPS,
 )
@@ -79,14 +79,18 @@ def process_video(
             if verbose:
                 print(f"  Frame {frame_number}")
             result = detector.predict(
-                source=frame, conf=VIDEO_DETECTION_CONFIDENCE, verbose=False
+                source=frame, conf=DETECTION_CONFIDENCE, verbose=False
             )[0]
             annotated, _ = annotate_result(
                 result, recognizer, verbose=verbose, tracking=tracking
             )
             viewer.show(annotated)
             delay_ms = max(1, round((frame_seconds - (monotonic() - started)) * 1000))
-            action = viewer.wait_for_action(timeout_ms=delay_ms)
+            action = viewer.wait_for_action(timeout_ms=delay_ms, allow_pause=True)
+            if action == "pause":
+                action = viewer.wait_for_action(allow_pause=True)
+                if action == "pause":
+                    action = "tick"
             if action != "tick":
                 return action
             started = monotonic()
